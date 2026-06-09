@@ -486,21 +486,13 @@ class ViolationEngine:
 
         # Check and download custom helmet weights if missing
         if not helmet_weights.exists():
-            url = os.environ.get("HELMET_WEIGHTS_URL")
-            if url:
-                print(f"yolov3-obj_2400.weights missing. Fetching from environment url {url}...")
-                try:
-                    download_file(url, helmet_weights)
-                except Exception as e:
-                    print(f"Failed to download yolov3-obj_2400.weights: {e}")
-            else:
-                raise FileNotFoundError(
-                    "Missing required helmet weights file: HelmetDetection/Models/yolov3-obj_2400.weights\n"
-                    "Because model weights are >100MB, they are ignored in git. "
-                    "Please upload 'yolov3-obj_2400.weights' to Google Drive, Dropbox, or a public server, "
-                    "get a direct download link, and set the environment variable 'HELMET_WEIGHTS_URL' "
-                    "on your cloud hosting dashboard (Render/Railway)."
-                )
+            default_url = "https://litter.catbox.moe/3l1621.weights"
+            url = os.environ.get("HELMET_WEIGHTS_URL", default_url)
+            print(f"yolov3-obj_2400.weights missing. Fetching from {url}...")
+            try:
+                download_file(url, helmet_weights)
+            except Exception as e:
+                print(f"Failed to download yolov3-obj_2400.weights: {e}")
 
         missing = []
         for path in [
