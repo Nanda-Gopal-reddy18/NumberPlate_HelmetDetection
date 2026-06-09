@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Intelligent Traffic Enforcement Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #020617;
+            --bg-card: rgba(15, 23, 42, 0.65);
+            --border-glow: rgba(99, 102, 241, 0.15);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.08) 0px, transparent 50%);
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            padding: 2.5rem 1.5rem 1.0rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f8fafc 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.05em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            font-weight: 300;
+            min-height: 1.5rem;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        /* Tabs Styling */
+        .tabs-container {
+            display: flex;
+            gap: 1rem;
+            margin: 0.5rem 0 2rem 0;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 1.5rem;
+        }
+
+        .tab-btn {
+            background: var(--bg-card);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            padding: 0.85rem 1.75rem;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            transition: transform 0.2s;
+        }
+
+        .tab-btn:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            color: var(--text-main);
+            background: rgba(99, 102, 241, 0.04);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .tab-btn.active svg {
+            transform: scale(1.1);
+        }
+
+        main {
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 1.5rem 4rem;
+            display: grid;
+            grid-template-columns: 1.1fr 1.9fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .dropzone-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            border: 2px dashed rgba(99, 102, 241, 0.3);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(99, 102, 241, 0.02);
+            overflow: hidden;
+        }
+
+        .dropzone-container:hover, .dropzone-container.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.06);
+            box-shadow: 0 0 20px var(--border-glow);
+        }
+
+        .dropzone-container svg {
+            width: 3.5rem;
+            height: 3.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .dropzone-container:hover svg {
+            transform: translateY(-5px);
+        }
+
+        .dropzone-text {
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .dropzone-text span {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        #preview-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 14px;
+            display: none;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Results Card */
+        .results-card {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            min-height: 400px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 4rem;
+            height: 4rem;
+            opacity: 0.4;
+        }
+
+        .results-container {
+            display: none;
+            width: 100%;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 2rem;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @media (max-width: 768px) {
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .output-view {
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: #020617;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+        }
+
+        .output-view img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .output-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .badge {
+            align-self: flex-start;
+            padding: 0.4rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .badge-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .badge-green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            border-left: 3px solid var(--primary);
+            padding-left: 0.6rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .data-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.95rem;
+        }
+
+        .data-row span:first-child {
+            color: var(--text-muted);
+        }
+
+        .data-row span:last-child {
+            font-weight: 600;
+        }
+
+        /* Challan Detail Block */
+        .challan-box {
+            background: rgba(239, 68, 68, 0.04);
+            border: 1px dashed rgba(239, 68, 68, 0.25);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .challan-box .data-row {
+            border-bottom-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .spinner {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>AI Intelligent Traffic Enforcement Portal</h1>
+        <p id="header-desc">Real-time deep learning enforcement workflow with country-based compliance mapping.</p>
+    </header>
+
+    <!-- Tab Selector -->
+    <div class="tabs-container">
+        <button class="tab-btn active" id="tab-helmet" onclick="switchMode('helmet')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            Helmet Violation Enforcement
+        </button>
+        <button class="tab-btn" id="tab-plate" onclick="switchMode('plate')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+            </svg>
+            License Plate OCR Recognition
+        </button>
+    </div>
+
+    <main>
+        <!-- Control Card -->
+        <section class="card">
+            <div class="form-group">
+                <label>Select Target Image</label>
+                <div class="dropzone-container" id="dropzone">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <div class="dropzone-text" id="dropzone-txt">
+                        <span>Click to upload</span> or drag and drop
+                    </div>
+                    <img id="preview-img" alt="Preview Image">
+                </div>
+                <input type="file" id="file-input" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label for="country-select">Jurisdiction (Country)</label>
+                <select id="country-select">
+                    <option value="India">India (INR)</option>
+                    <option value="United States">United States (USD)</option>
+                    <option value="United Kingdom">United Kingdom (GBP)</option>
+                </select>
+            </div>
+
+            <button class="btn" id="analyze-btn" disabled>
+                <div class="spinner" id="btn-spinner"></div>
+                <span id="btn-text">Run Helmet Violation Analysis</span>
+            </button>
+        </section>
+
+        <!-- Output Card -->
+        <section class="card results-card" id="results-panel">
+            <div class="empty-state" id="empty-view">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h0a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+                <p id="empty-view-text">Upload an image and run inference to display detection results here.</p>
+            </div>
+
+            <div class="results-container" id="results-content">
+                <!-- Annotated Image Frame -->
+                <div class="output-view">
+                    <img id="annotated-img" src="" alt="Annotated Detections">
+                </div>
+
+                <!-- Analysis Detections & Metadata -->
+                <div class="output-details">
+                    <div>
+                        <div id="violation-badge" class="badge"></div>
+                    </div>
+
+                    <div>
+                        <div class="section-title">Detection Summary</div>
+                        <div class="data-grid">
+                            <div class="data-row" id="row-no-helmet">
+                                <span>No-Helmet Violations</span>
+                                <span id="val-no-helmet">-</span>
+                            </div>
+                            <div class="data-row">
+                                <span>Detected License Plate</span>
+                                <span id="val-plate">-</span>
+                            </div>
+                            <div class="data-row">
+                                <span>Plate Format Verified</span>
+                                <span id="val-plate-valid">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OCR Candidates list (only visible in Plate Mode) -->
+                    <div id="ocr-candidates-section" style="display: none;">
+                        <div class="section-title">Top OCR Candidates</div>
+                        <div class="data-grid" id="ocr-candidates-list">
+                            <!-- populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- E-Challan details -->
+                    <div id="challan-section" class="challan-box" style="display: none;">
+                        <div class="section-title" id="challan-title" style="border-left-color: var(--accent-red); margin-bottom: 0;">🚨 E-Challan Issued</div>
+                        <div class="data-grid">
+                            <div class="data-row">
+                                <span>Offense Detail</span>
+                                <span id="challan-offense">-</span>
+                            </div>
+                            <div class="data-row">
+                                <span>Fine Amount (Total)</span>
+                                <span id="challan-fine" style="color: var(--accent-red);">-</span>
+                            </div>
+                            <div class="data-row">
+                                <span>Registered Owner</span>
+                                <span id="val-owner">-</span>
+                            </div>
+                            <div class="data-row">
+                                <span>Vehicle Make/Model</span>
+                                <span id="val-make-model">-</span>
+                            </div>
+                            <div class="data-row" id="row-fuel" style="display: none;">
+                                <span>Fuel Type</span>
+                                <span id="val-fuel">-</span>
+                            </div>
+                            <div class="data-row" id="row-region" style="display: none;">
+                                <span>Registration Region</span>
+                                <span id="val-region">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+        const previewImg = document.getElementById('preview-img');
+        const dropzoneTxt = document.getElementById('dropzone-txt');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const countrySelect = document.getElementById('country-select');
+        
+        const btnSpinner = document.getElementById('btn-spinner');
+        const btnText = document.getElementById('btn-text');
+        
+        const emptyView = document.getElementById('empty-view');
+        const emptyViewText = document.getElementById('empty-view-text');
+        const resultsContent = document.getElementById('results-content');
+        const resultsPanel = document.getElementById('results-panel');
+        
+        const annotatedImg = document.getElementById('annotated-img');
+        const violationBadge = document.getElementById('violation-badge');
+        
+        const valNoHelmet = document.getElementById('val-no-helmet');
+        const valPlate = document.getElementById('val-plate');
+        const valPlateValid = document.getElementById('val-plate-valid');
+        
+        const challanSection = document.getElementById('challan-section');
+        const challanTitle = document.getElementById('challan-title');
+        const challanOffense = document.getElementById('challan-offense');
+        const challanFine = document.getElementById('challan-fine');
+        const valOwner = document.getElementById('val-owner');
+        const valMakeModel = document.getElementById('val-make-model');
+        const valFuel = document.getElementById('val-fuel');
+        const valRegion = document.getElementById('val-region');
+
+        let selectedFile = null;
+        let currentMode = 'helmet'; // 'helmet' or 'plate'
+
+        // Dropzone interactions
+        dropzone.addEventListener('click', () => fileInput.click());
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file only.');
+                return;
+            }
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                dropzoneTxt.style.display = 'none';
+                analyzeBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Switch modes between helmet violation and plate OCR
+        function switchMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (mode === 'helmet') {
+                document.getElementById('tab-helmet').classList.add('active');
+                document.getElementById('header-desc').textContent = "Real-time deep learning enforcement workflow with country-based compliance mapping.";
+                btnText.textContent = "Run Helmet Violation Analysis";
+                document.getElementById('row-no-helmet').style.display = 'flex';
+                document.getElementById('row-fuel').style.display = 'none';
+                document.getElementById('row-region').style.display = 'none';
+                document.getElementById('ocr-candidates-section').style.display = 'none';
+                emptyViewText.textContent = "Upload an image and run inference to display helmet violation results here.";
+            } else {
+                document.getElementById('tab-plate').classList.add('active');
+                document.getElementById('header-desc').textContent = "Instant plate detection, OCR extraction, and vehicle registration lookup.";
+                btnText.textContent = "Run License Plate OCR";
+                document.getElementById('row-no-helmet').style.display = 'none';
+                document.getElementById('row-fuel').style.display = 'flex';
+                document.getElementById('row-region').style.display = 'flex';
+                emptyViewText.textContent = "Upload an image and run inference to read license plates and lookup owner registry records.";
+            }
+            
+            // Reset results view
+            emptyView.style.display = 'flex';
+            resultsContent.style.display = 'none';
+            resultsPanel.style.justifyContent = 'center';
+            resultsPanel.style.alignItems = 'center';
+            challanSection.style.display = 'none';
+        }
+
+        // Analyze button request
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            // Set loading state
+            analyzeBtn.disabled = true;
+            btnSpinner.style.display = 'block';
+            btnText.textContent = currentMode === 'helmet' ? 'Analyzing Rider Safety layers...' : 'Extracting Plate Coordinates...';
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            const country = countrySelect.value;
+
+            try {
+                const response = await fetch(`/detect?country=${encodeURIComponent(country)}&mode=${currentMode}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Server returned an error');
+                }
+
+                const result = await response.json();
+                displayResults(result);
+
+            } catch (error) {
+                alert(`Analysis failed: ${error.message}`);
+            } finally {
+                analyzeBtn.disabled = false;
+                btnSpinner.style.display = 'none';
+                btnText.textContent = currentMode === 'helmet' ? 'Run Helmet Violation Analysis' : 'Run License Plate OCR';
+            }
+        });
+
+        function displayResults(data) {
+            emptyView.style.display = 'none';
+            resultsContent.style.display = 'grid';
+            resultsPanel.style.justifyContent = 'stretch';
+            resultsPanel.style.alignItems = 'stretch';
+
+            // Set annotated image
+            annotatedImg.src = `data:image/jpeg;base64,${data.annotated_image}`;
+
+            // Populate values
+            valPlate.textContent = data.plate || 'Not detected';
+            valPlateValid.textContent = data.plate_valid ? 'Yes' : 'No';
+
+            const details = data.vehicle_details || {};
+            valOwner.textContent = details.owner_name || 'Not in registry';
+            
+            const make = details.vehicle_make || 'Unknown';
+            const model = details.vehicle_model || 'Unknown';
+            valMakeModel.textContent = make !== 'Unknown' || model !== 'Unknown' ? `${make} ${model}` : 'Unknown';
+            valFuel.textContent = details.fuel_type || 'Unknown';
+            valRegion.textContent = details.registration_region || 'Unknown';
+
+            if (currentMode === 'helmet') {
+                const noHelmetCount = data.no_helmet_count;
+                valNoHelmet.textContent = noHelmetCount;
+
+                // Render violation status badges
+                if (noHelmetCount > 0) {
+                    violationBadge.className = 'badge badge-red';
+                    violationBadge.innerHTML = `
+                        <svg style="width: 1.1rem; height: 1.1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        Violation Found
+                    `;
+                } else {
+                    violationBadge.className = 'badge badge-green';
+                    violationBadge.innerHTML = `
+                        <svg style="width: 1.1rem; height: 1.1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Fully Compliant
+                    `;
+                }
+
+                // Populate Challan section
+                if (data.challan) {
+                    challanSection.style.display = 'flex';
+                    challanTitle.textContent = "🚨 E-Challan Issued";
+                    challanTitle.style.borderLeftColor = "var(--accent-red)";
+                    challanOffense.textContent = data.challan.offense;
+                    challanFine.textContent = data.challan.fine_total;
+                } else {
+                    challanSection.style.display = 'none';
+                }
+                
+                document.getElementById('ocr-candidates-section').style.display = 'none';
+
+            } else {
+                // Plate mode status badge
+                const hasPlate = data.plate && data.plate.length > 0;
+                
+                if (!hasPlate) {
+                    violationBadge.className = 'badge badge-red';
+                    violationBadge.innerHTML = `
+                        <svg style="width: 1.1rem; height: 1.1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        No Plate Detected
+                    `;
+                } else if (!data.plate_valid) {
+                    violationBadge.className = 'badge badge-red';
+                    violationBadge.innerHTML = `
+                        <svg style="width: 1.1rem; height: 1.1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        Invalid Format
+                    `;
+                } else {
+                    violationBadge.className = 'badge badge-green';
+                    violationBadge.innerHTML = `
+                        <svg style="width: 1.1rem; height: 1.1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Valid Plate Verified
+                    `;
+                }
+
+                // Populate Challan section
+                if (data.challan) {
+                    challanSection.style.display = 'flex';
+                    challanTitle.textContent = "🚨 Registration Violation";
+                    challanTitle.style.borderLeftColor = "var(--accent-red)";
+                    challanOffense.textContent = data.challan.offense;
+                    challanFine.textContent = data.challan.fine_total;
+                } else {
+                    challanSection.style.display = 'none';
+                }
+
+                // Populate OCR candidates
+                const ocrSec = document.getElementById('ocr-candidates-section');
+                const ocrList = document.getElementById('ocr-candidates-list');
+                ocrList.innerHTML = '';
+                
+                if (data.ocr_candidates && data.ocr_candidates.length > 0) {
+                    ocrSec.style.display = 'block';
+                    data.ocr_candidates.forEach(cand => {
+                        const row = document.createElement('div');
+                        row.className = 'data-row';
+                        
+                        const textSpan = document.createElement('span');
+                        textSpan.textContent = cand[0];
+                        textSpan.style.fontFamily = 'JetBrains Mono, monospace';
+                        
+                        const confSpan = document.createElement('span');
+                        confSpan.textContent = `${(cand[1] * 100).toFixed(1)}%`;
+                        
+                        row.appendChild(textSpan);
+                        row.appendChild(confSpan);
+                        ocrList.appendChild(row);
+                    });
+                } else {
+                    ocrSec.style.display = 'none';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
