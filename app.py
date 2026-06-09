@@ -12,16 +12,16 @@ import pathlib
 if os.name == "nt":
     pathlib.PosixPath = pathlib.WindowsPath
 
-# Add current folder to path so we can import detector
-sys.path.append(str(Path(__file__).resolve().parent))
+# Add HelmetDetection folder to path so we can import detector
+sys.path.append(str(Path(__file__).resolve().parent / "HelmetDetection"))
 from detector import ViolationEngine, USER_DATABASE, send_violation_email, build_violation_message
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="HelmetDetection/templates")
 # Enable CORS for all routes
 CORS(app)
 
 # Initialize and pre-load the models to speed up API responses
-app_dir = Path(__file__).resolve().parent
+app_dir = Path(__file__).resolve().parent / "HelmetDetection"
 print("Initializing Violation Detection Engine...")
 engine = ViolationEngine(app_dir)
 print("Loading Deep Learning Models (this can take a few moments)...")
