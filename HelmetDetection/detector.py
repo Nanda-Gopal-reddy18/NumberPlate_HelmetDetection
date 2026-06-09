@@ -417,6 +417,19 @@ def ensure_pkg_resources_available() -> None:
             f"\"{sys.executable} -m pip install setuptools<81 wheel\""
         ) from exc
 
+def download_file(url: str, dest_path: Path) -> None:
+    import urllib.request
+    print(f"Downloading {url} to {dest_path}...")
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    req = urllib.request.Request(
+        url, 
+        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    )
+    with urllib.request.urlopen(req) as response, open(dest_path, 'wb') as out_file:
+        data = response.read()
+        out_file.write(data)
+    print(f"Download complete for {dest_path.name}")
+
 
 class ViolationEngine:
     def __init__(self, app_dir: Path) -> None:
@@ -436,6 +449,17 @@ class ViolationEngine:
     def load_models(self) -> None:
         rider_cfg = self.app_dir / "yolov3model" / "yolov3.cfg"
         rider_weights = self.app_dir / "yolov3model" / "yolov3.weights"
+        
+        # Check and download yolov3.weights if missing
+        if not rider_weights.exists():
+            default_url = "https://pjreddie.com/media/files/yolov3.weights"
+            url = os.environ.get("RIDER_WEIGHTS_URL", default_url)
+            print(f"yolov3.weights missing. Fetching from {url}...")
+            try:
+                download_file(url, rider_weights)
+            except Exception as e:
+                print(f"Failed to download yolov3.weights: {e}")
+
         rider_labels = first_existing_path(
             [
                 self.app_dir / "yolov3model" / "label_backup.txt",
@@ -459,6 +483,24 @@ class ViolationEngine:
                 self.project_dir / "NumberPlate" / "NumberPlate" / "yolov5",
             ]
         )
+
+        # Check and download custom helmet weights if missing
+        if not helmet_weights.exists():
+            url = os.environ.get("HELMET_WEIGHTS_URL")
+            if url:
+                print(f"yolov3-obj_2400.weights missing. Fetching from environment url {url}...")
+                try:
+                    download_file(url, helmet_weights)
+                except Exception as e:
+                    print(f"Failed to download yolov3-obj_2400.weights: {e}")
+            else:
+                raise FileNotFoundError(
+                    "Missing required helmet weights file: HelmetDetection/Models/yolov3-obj_2400.weights\n"
+                    "Because model weights are >100MB, they are ignored in git. "
+                    "Please upload 'yolov3-obj_2400.weights' to Google Drive, Dropbox, or a public server, "
+                    "get a direct download link, and set the environment variable 'HELMET_WEIGHTS_URL' "
+                    "on your cloud hosting dashboard (Render/Railway)."
+                )
 
         missing = []
         for path in [
