@@ -354,7 +354,7 @@ def normalize_plate(raw: str, country: str) -> Tuple[str, bool, float]:
     score = 0.35 if valid else -0.1
     return value, valid, score
 
-def send_violation_email(to_email, subject, body, root=None):
+def send_violation_email(to_email, subject, body):
     sender_email = "naveenkanigiri999@gmail.com"
     sender_password = "qkkh vbpr kgbs iobj"
 
@@ -376,16 +376,11 @@ def send_violation_email(to_email, subject, body, root=None):
         server.quit()
 
         print(f"✅ Email sent to {to_email}")
-
-        if root:
-            from tkinter import messagebox
-            messagebox.showinfo(
-                "Email Sent",
-                f"Email successfully sent to:\n{to_email}"
-            )
+        return True
 
     except Exception as e:
         print(f"⚠️  Email delivery skipped (non-critical): {str(e)}")
+        return False
 
 def build_violation_message(result):
     msg = "🚨 Traffic Violation Detected\n\n"

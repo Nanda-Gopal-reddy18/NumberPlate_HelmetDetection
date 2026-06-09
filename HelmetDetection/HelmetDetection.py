@@ -270,12 +270,16 @@ class HelmetDetectionApp:
                 if result["no_helmet_count"] > 0 or not result["plate_detected"]:
                     try:
                         message = build_violation_message(result)
-                        send_violation_email(
+                        success = send_violation_email(
                             user["email"],
                             "Traffic Violation Alert 🚨",
-                            message,
-                            self.root
+                            message
                         )
+                        if success:
+                            messagebox.showinfo(
+                                "Email Sent",
+                                f"Email successfully sent to:\n{user['email']}"
+                            )
                     except Exception as email_err:
                         print(f"⚠️  Email sending failed (continuing): {email_err}")
                         
