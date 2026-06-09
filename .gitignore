@@ -1,0 +1,45 @@
+# Virtual environments
+nh/
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Model outputs (if you want to exclude large generated files)
+# models/
+# weights/
+
+# Keep these if you want to track them:
+# - requirements.txt (already tracked)
+# - Model files in Models/ and yolov3model/ (keep for functionality)
+
+# Ignore local dependencies check marker
+.deps_ok
+
+# Ignore large model weights and setup installers
+*.weights
+*.exe
