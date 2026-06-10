@@ -15,6 +15,15 @@ import easyocr
 import numpy as np
 import torch
 
+# Fix for PyTorch 2.6+ where weights_only default changed to True
+# and fails to load custom models like YOLOv5
+_orig_torch_load = torch.load
+def _safe_torch_load(*args, **kwargs):
+    if "weights_only" not in kwargs:
+        kwargs["weights_only"] = False
+    return _orig_torch_load(*args, **kwargs)
+torch.load = _safe_torch_load
+
 if os.name == "nt":
     pathlib.PosixPath = pathlib.WindowsPath
 
