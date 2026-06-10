@@ -1,0 +1,21 @@
+name: Sync to Hugging Face
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Push to hub
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # Replace 'numberplate-helmet-detection' below with your actual Hugging Face Space name if different
+          git push --force https://Nanda-Gopal-reddy18:$HF_TOKEN@huggingface.co/spaces/Nanda-Gopal-reddy18/numberplate-helmet-detection main
