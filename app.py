@@ -28,6 +28,23 @@ print("Loading Deep Learning Models (this can take a few moments)...")
 engine.load_models()
 print("Models loaded successfully. Starting API service...")
 
+@app.route("/status", methods=["GET"])
+def get_status():
+    return jsonify({
+        "models_loaded": getattr(engine, "models_loaded", False)
+    })
+
+@app.route("/load", methods=["POST"])
+def load_models():
+    try:
+        if not getattr(engine, "models_loaded", False):
+            print("Loading models via API request...")
+            engine.load_models()
+        return jsonify({"status": "success", "models_loaded": engine.models_loaded})
+    except Exception as e:
+        print(f"Error loading models: {e}")
+        return jsonify({"status": "error", "error": str(e)}), 500
+
 @app.route("/")
 def home():
     # Render the drag-and-drop Web UI interface
@@ -43,6 +60,11 @@ def detect():
         return jsonify({"error": "Selected file is empty"}), 400
         
     try:
+        # Check and load models if they aren't loaded yet
+        if not getattr(engine, "models_loaded", False):
+            print("Lazy loading models on request...")
+            engine.load_models()
+
         # Read image bytes directly from memory without saving to disk
         img_bytes = file.read()
         np_img = np.frombuffer(img_bytes, np.uint8)
@@ -61,15 +83,30 @@ def detect():
         else:
             result = engine.analyze(frame, country)
             
-        # Check if the filename stem matches a user in USER_DATABASE to send email violation alerts
-        filename = file.filename
-        if filename:
-            image_name = Path(filename).stem
-            user = USER_DATABASE.get(image_name)
-            if user:
-                import time
-                if mode == "plate":
-                    if not result["plate_detected"] or not result["plate_valid"]:
+        # Check if email alerts are requested
+        email_alert = request.args.get("email_alert", "false").lower() == "true"
+        custom_email = request.args.get("email", "")
+        
+        recipient_email = None
+        if email_alert:
+            if custom_email:
+                recipient_email = custom_email
+            else:
+                # Fallback to database lookup via filename
+                filename = file.filename
+                if filename:
+                    image_name = Path(filename).stem
+                    user = USER_DATABASE.get(image_name)
+                    if user:
+                        recipient_email = user["email"]
+
+        if recipient_email:
+            import time
+            if mode == "plate":
+                if not result["plate_detected"] or not result["plate_valid"]: # plate issue
+                    # helper variable to decide if there's an issue
+                    is_violation = not result["plate_detected"] or not result["plate_valid"]
+                    if is_violation:
                         try:
                             msg = "🚨 License Plate Violation Detected\n\n"
                             if not result["plate_detected"]:
@@ -79,23 +116,23 @@ def detect():
                             msg += f"\nPlate: {result['plate_text'] if result['plate_text'] else 'Not detected'}"
                             msg += f"\nTime: {time.strftime('%Y-%m-%d %H:%M:%S')}"
                             send_violation_email(
-                                user["email"],
+                                recipient_email,
                                 "License Plate Violation Alert 🚨",
                                 msg
                             )
                         except Exception as email_err:
                             print(f"⚠️ Email sending failed: {email_err}")
-                else: # helmet mode
-                    if result["no_helmet_count"] > 0 or not result["plate_detected"]:
-                        try:
-                            message = build_violation_message(result)
-                            send_violation_email(
-                                user["email"],
-                                "Traffic Violation Alert 🚨",
-                                message
-                            )
-                        except Exception as email_err:
-                            print(f"⚠️ Email sending failed: {email_err}")
+            else: # helmet mode
+                if result["no_helmet_count"] > 0 or not result["plate_detected"]:
+                    try:
+                        message = build_violation_message(result)
+                        send_violation_email(
+                            recipient_email,
+                            "Traffic Violation Alert 🚨",
+                            message
+                        )
+                    except Exception as email_err:
+                        print(f"⚠️ Email sending failed: {email_err}")
         
         # Encode the annotated frame to JPEG base64 to render directly inside the web browser
         annotated_frame = result["annotated_frame"]

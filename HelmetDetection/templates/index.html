@@ -413,6 +413,40 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Floating Remove Button */
+        .remove-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(239, 68, 68, 0.85);
+            border: none;
+            color: white;
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .remove-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+        }
+        .remove-btn svg {
+            width: 1.2rem !important;
+            height: 1.2rem !important;
+            color: white !important;
+            margin-bottom: 0 !important;
+        }
     </style>
 </head>
 <body>
@@ -441,9 +475,28 @@
     <main>
         <!-- Control Card -->
         <section class="card">
-            <div class="form-group">
+            <!-- Model Engine Load Status -->
+            <div class="form-group" style="padding-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 0.25rem;">
+                <label>AI Models Engine</label>
+                <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.2); padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.03);">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <div id="model-status-indicator" style="width: 10px; height: 10px; border-radius: 50%; background-color: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); transition: all 0.3s ease;"></div>
+                        <span id="model-status-text" style="font-size: 0.95rem; font-weight: 600; color: var(--text-muted); transition: color 0.3s;">Not Loaded</span>
+                    </div>
+                    <button id="load-models-btn" class="btn" style="padding: 0.45rem 0.9rem; font-size: 0.85rem; border-radius: 8px; box-shadow: none; display: none;" onclick="triggerLoadModels()">
+                        Load Models
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group" style="position: relative;">
                 <label>Select Target Image</label>
                 <div class="dropzone-container" id="dropzone">
+                    <button id="remove-img-btn" class="remove-btn" title="Remove Image" style="display: none;" onclick="clearImage(event)">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
@@ -462,6 +515,18 @@
                     <option value="United States">United States (USD)</option>
                     <option value="United Kingdom">United Kingdom (GBP)</option>
                 </select>
+            </div>
+
+            <!-- Email Alerts Toggle -->
+            <div class="form-group email-group" style="margin-top: 0.25rem; margin-bottom: 0.25rem;">
+                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; text-transform: none; font-size: 0.95rem; color: var(--text-main); font-weight: 500;">
+                    <input type="checkbox" id="email-alert-checkbox" style="width: 1.15rem; height: 1.15rem; accent-color: var(--primary); cursor: pointer;" onchange="toggleEmailInput()">
+                    Send Email Alert on Violation
+                </label>
+                <div id="email-input-container" style="display: none; margin-top: 0.75rem; animation: fadeIn 0.3s ease;">
+                    <label for="email-address-input" style="font-size: 0.8rem; margin-bottom: 0.25rem; display: block;">Recipient Email Address</label>
+                    <input type="email" id="email-address-input" placeholder="e.g. officer@traffic.gov" style="width: 100%; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-main); padding: 0.8rem 1rem; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s;">
+                </div>
             </div>
 
             <button class="btn" id="analyze-btn" disabled>
@@ -584,8 +649,97 @@
         const valFuel = document.getElementById('val-fuel');
         const valRegion = document.getElementById('val-region');
 
+        const modelStatusIndicator = document.getElementById('model-status-indicator');
+        const modelStatusText = document.getElementById('model-status-text');
+        const loadModelsBtn = document.getElementById('load-models-btn');
+        const removeImgBtn = document.getElementById('remove-img-btn');
+        const emailAlertCheckbox = document.getElementById('email-alert-checkbox');
+        const emailInputContainer = document.getElementById('email-input-container');
+        const emailAddressInput = document.getElementById('email-address-input');
+
         let selectedFile = null;
         let currentMode = 'helmet'; // 'helmet' or 'plate'
+
+        // Check model load status on page load
+        async function checkModelStatus() {
+            try {
+                const response = await fetch('/status');
+                if (response.ok) {
+                    const data = await response.json();
+                    updateModelStatusUI(data.models_loaded);
+                }
+            } catch (err) {
+                console.error("Failed to fetch model status:", err);
+            }
+        }
+
+        function updateModelStatusUI(loaded) {
+            if (loaded) {
+                modelStatusIndicator.style.backgroundColor = 'var(--accent-green)';
+                modelStatusIndicator.style.boxShadow = '0 0 8px var(--accent-green)';
+                modelStatusText.textContent = 'Ready (Loaded)';
+                modelStatusText.style.color = 'var(--accent-green)';
+                loadModelsBtn.style.display = 'none';
+            } else {
+                modelStatusIndicator.style.backgroundColor = 'var(--accent-red)';
+                modelStatusIndicator.style.boxShadow = '0 0 8px var(--accent-red)';
+                modelStatusText.textContent = 'Not Loaded';
+                modelStatusText.style.color = 'var(--text-muted)';
+                loadModelsBtn.style.display = 'block';
+            }
+        }
+
+        async function triggerLoadModels() {
+            loadModelsBtn.disabled = true;
+            const origText = loadModelsBtn.textContent;
+            loadModelsBtn.textContent = 'Loading...';
+            modelStatusText.textContent = 'Loading layers...';
+            modelStatusText.style.color = 'var(--primary)';
+            modelStatusIndicator.style.backgroundColor = 'var(--primary)';
+            modelStatusIndicator.style.boxShadow = '0 0 8px var(--primary)';
+
+            try {
+                const response = await fetch('/load', { method: 'POST' });
+                if (response.ok) {
+                    const data = await response.json();
+                    updateModelStatusUI(data.models_loaded);
+                } else {
+                    throw new Error("Failed to load models");
+                }
+            } catch (err) {
+                alert("Model loading failed: " + err.message);
+                updateModelStatusUI(false);
+            } finally {
+                loadModelsBtn.disabled = false;
+                loadModelsBtn.textContent = origText;
+            }
+        }
+
+        function toggleEmailInput() {
+            if (emailAlertCheckbox.checked) {
+                emailInputContainer.style.display = 'block';
+            } else {
+                emailInputContainer.style.display = 'none';
+            }
+        }
+
+        function clearImage(e) {
+            if (e) e.stopPropagation(); // Prevent triggering dropzone click
+            selectedFile = null;
+            fileInput.value = '';
+            previewImg.src = '';
+            previewImg.style.display = 'none';
+            removeImgBtn.style.display = 'none';
+            dropzoneTxt.style.display = 'block';
+            analyzeBtn.disabled = true;
+            
+            // Reset results view
+            emptyView.style.display = 'flex';
+            resultsContent.style.display = 'none';
+            resultsPanel.style.justifyContent = 'center';
+            resultsPanel.style.alignItems = 'center';
+            challanSection.style.display = 'none';
+        }
 
         // Dropzone interactions
         dropzone.addEventListener('click', () => fileInput.click());
@@ -623,6 +777,7 @@
             reader.onload = (e) => {
                 previewImg.src = e.target.result;
                 previewImg.style.display = 'block';
+                removeImgBtn.style.display = 'flex';
                 dropzoneTxt.style.display = 'none';
                 analyzeBtn.disabled = false;
             };
@@ -674,9 +829,19 @@
             formData.append('image', selectedFile);
 
             const country = countrySelect.value;
+            const emailAlert = emailAlertCheckbox.checked;
+            const emailAddress = emailAddressInput.value.trim();
+
+            let fetchUrl = `/detect?country=${encodeURIComponent(country)}&mode=${currentMode}`;
+            if (emailAlert) {
+                fetchUrl += `&email_alert=true`;
+                if (emailAddress) {
+                    fetchUrl += `&email=${encodeURIComponent(emailAddress)}`;
+                }
+            }
 
             try {
-                const response = await fetch(`/detect?country=${encodeURIComponent(country)}&mode=${currentMode}`, {
+                const response = await fetch(fetchUrl, {
                     method: 'POST',
                     body: formData
                 });
@@ -688,6 +853,9 @@
 
                 const result = await response.json();
                 displayResults(result);
+                
+                // Proactively update model status status card if lazy load occurred
+                updateModelStatusUI(true);
 
             } catch (error) {
                 alert(`Analysis failed: ${error.message}`);
@@ -824,6 +992,9 @@
                 }
             }
         }
+
+        // Initialize status check
+        checkModelStatus();
     </script>
 </body>
 </html>
