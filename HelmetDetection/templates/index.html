@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Intelligent Traffic Enforcement Portal</title>
+    <title>An Intelligent Vision Based System for Vehicle Identification and Helmet Detection</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -452,8 +452,7 @@
 <body>
 
     <header>
-        <h1>AI Intelligent Traffic Enforcement Portal</h1>
-        <p id="header-desc">Real-time deep learning enforcement workflow with country-based compliance mapping.</p>
+        <h1>An Intelligent Vision Based System for Vehicle Identification and Helmet Detection</h1>
     </header>
 
     <!-- Tab Selector -->
@@ -517,17 +516,7 @@
                 </select>
             </div>
 
-            <!-- Email Alerts Toggle -->
-            <div class="form-group email-group" style="margin-top: 0.25rem; margin-bottom: 0.25rem;">
-                <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; text-transform: none; font-size: 0.95rem; color: var(--text-main); font-weight: 500;">
-                    <input type="checkbox" id="email-alert-checkbox" style="width: 1.15rem; height: 1.15rem; accent-color: var(--primary); cursor: pointer;" onchange="toggleEmailInput()">
-                    Send Email Alert on Violation
-                </label>
-                <div id="email-input-container" style="display: none; margin-top: 0.75rem; animation: fadeIn 0.3s ease;">
-                    <label for="email-address-input" style="font-size: 0.8rem; margin-bottom: 0.25rem; display: block;">Recipient Email Address</label>
-                    <input type="email" id="email-address-input" placeholder="e.g. officer@traffic.gov" style="width: 100%; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-main); padding: 0.8rem 1rem; border-radius: 10px; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s;">
-                </div>
-            </div>
+
 
             <button class="btn" id="analyze-btn" disabled>
                 <div class="spinner" id="btn-spinner"></div>
@@ -653,9 +642,7 @@
         const modelStatusText = document.getElementById('model-status-text');
         const loadModelsBtn = document.getElementById('load-models-btn');
         const removeImgBtn = document.getElementById('remove-img-btn');
-        const emailAlertCheckbox = document.getElementById('email-alert-checkbox');
-        const emailInputContainer = document.getElementById('email-input-container');
-        const emailAddressInput = document.getElementById('email-address-input');
+
 
         let selectedFile = null;
         let currentMode = 'helmet'; // 'helmet' or 'plate'
@@ -715,13 +702,7 @@
             }
         }
 
-        function toggleEmailInput() {
-            if (emailAlertCheckbox.checked) {
-                emailInputContainer.style.display = 'block';
-            } else {
-                emailInputContainer.style.display = 'none';
-            }
-        }
+
 
         function clearImage(e) {
             if (e) e.stopPropagation(); // Prevent triggering dropzone click
@@ -791,7 +772,6 @@
             
             if (mode === 'helmet') {
                 document.getElementById('tab-helmet').classList.add('active');
-                document.getElementById('header-desc').textContent = "Real-time deep learning enforcement workflow with country-based compliance mapping.";
                 btnText.textContent = "Run Helmet Violation Analysis";
                 document.getElementById('row-no-helmet').style.display = 'flex';
                 document.getElementById('row-fuel').style.display = 'none';
@@ -800,7 +780,6 @@
                 emptyViewText.textContent = "Upload an image and run inference to display helmet violation results here.";
             } else {
                 document.getElementById('tab-plate').classList.add('active');
-                document.getElementById('header-desc').textContent = "Instant plate detection, OCR extraction, and vehicle registration lookup.";
                 btnText.textContent = "Run License Plate OCR";
                 document.getElementById('row-no-helmet').style.display = 'none';
                 document.getElementById('row-fuel').style.display = 'flex';
@@ -829,16 +808,7 @@
             formData.append('image', selectedFile);
 
             const country = countrySelect.value;
-            const emailAlert = emailAlertCheckbox.checked;
-            const emailAddress = emailAddressInput.value.trim();
-
             let fetchUrl = `/detect?country=${encodeURIComponent(country)}&mode=${currentMode}`;
-            if (emailAlert) {
-                fetchUrl += `&email_alert=true`;
-                if (emailAddress) {
-                    fetchUrl += `&email=${encodeURIComponent(emailAddress)}`;
-                }
-            }
 
             try {
                 const response = await fetch(fetchUrl, {

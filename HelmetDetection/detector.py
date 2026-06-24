@@ -378,17 +378,17 @@ def send_violation_email(to_email, subject, body):
         import ssl
         context = ssl.create_default_context()
         
-        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server = smtplib.SMTP("smtp.gmail.com", 587, timeout=5.0)
         server.starttls(context=context)
         server.login(sender_email, sender_password)
         server.send_message(msg)
         server.quit()
 
-        print(f"✅ Email sent to {to_email}")
+        print(f"SUCCESS: Email sent to {to_email}")
         return True
 
     except Exception as e:
-        print(f"⚠️  Email delivery skipped (non-critical): {str(e)}")
+        print(f"WARNING: Email delivery skipped (non-critical): {str(e)}")
         return False
 
 def build_violation_message(result):

@@ -82,46 +82,29 @@ def detect():
             result = engine.analyze_plate(frame, country)
         else:
             result = engine.analyze(frame, country)
-            
-        # Check if email alerts are requested
-        email_alert = request.args.get("email_alert", "false").lower() == "true"
-        custom_email = request.args.get("email", "")
-        
-        recipient_email = None
-        if email_alert:
-            if custom_email:
-                recipient_email = custom_email
-            else:
-                # Fallback to database lookup via filename
-                filename = file.filename
-                if filename:
-                    image_name = Path(filename).stem
-                    user = USER_DATABASE.get(image_name)
-                    if user:
-                        recipient_email = user["email"]
+
+        # Send email alerts internally to specific email
+        recipient_email = "nandavemireddy1@gmail.com"
 
         if recipient_email:
             import time
             if mode == "plate":
                 if not result["plate_detected"] or not result["plate_valid"]: # plate issue
-                    # helper variable to decide if there's an issue
-                    is_violation = not result["plate_detected"] or not result["plate_valid"]
-                    if is_violation:
-                        try:
-                            msg = "🚨 License Plate Violation Detected\n\n"
-                            if not result["plate_detected"]:
-                                msg += "❌ License Plate Not Detected\n"
-                            elif not result["plate_valid"]:
-                                msg += "⚠ Invalid License Plate Format\n"
-                            msg += f"\nPlate: {result['plate_text'] if result['plate_text'] else 'Not detected'}"
-                            msg += f"\nTime: {time.strftime('%Y-%m-%d %H:%M:%S')}"
-                            send_violation_email(
-                                recipient_email,
-                                "License Plate Violation Alert 🚨",
-                                msg
-                            )
-                        except Exception as email_err:
-                            print(f"⚠️ Email sending failed: {email_err}")
+                    try:
+                        msg = "🚨 License Plate Violation Detected\n\n"
+                        if not result["plate_detected"]:
+                            msg += "❌ License Plate Not Detected\n"
+                        elif not result["plate_valid"]:
+                            msg += "⚠ Invalid License Plate Format\n"
+                        msg += f"\nPlate: {result['plate_text'] if result['plate_text'] else 'Not detected'}"
+                        msg += f"\nTime: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+                        send_violation_email(
+                            recipient_email,
+                            "License Plate Violation Alert 🚨",
+                            msg
+                        )
+                    except Exception as email_err:
+                        print(f"WARNING: Email sending failed: {email_err}")
             else: # helmet mode
                 if result["no_helmet_count"] > 0 or not result["plate_detected"]:
                     try:
@@ -132,7 +115,7 @@ def detect():
                             message
                         )
                     except Exception as email_err:
-                        print(f"⚠️ Email sending failed: {email_err}")
+                        print(f"WARNING: Email sending failed: {email_err}")
         
         # Encode the annotated frame to JPEG base64 to render directly inside the web browser
         annotated_frame = result["annotated_frame"]
