@@ -40,6 +40,5 @@ Thumbs.db
 # Ignore local dependencies check marker
 .deps_ok
 
-# Ignore large model weights and setup installers
-*.weights
+# Ignore setup installers (weights are tracked via Git LFS)
 *.exe
